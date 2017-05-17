@@ -1,6 +1,7 @@
 "use strict";
 
 var AWS = require('aws-sdk');
+AWS.config.loadFromPath('./config.json');
 
 console.log("AWS Lambda SES Forwarder // @arithmetric // Version 4.1.0");
 
@@ -27,6 +28,13 @@ console.log("AWS Lambda SES Forwarder // @arithmetric // Version 4.1.0");
 //
 //   To match a mailbox name on all domains, use a key without the "at" symbol
 //   and domain part of an email address (i.e. `info`).
+
+const EMAIL_TABLE_NAME = "EmailForwarder";
+const FIELD_ORIG_ADDRESS = "original_address";
+const FIELD_FORWARD_MAPPING = "forwardMapping";
+const FIELD_FORWARD_MAPPING_VALS = "L";
+
+
 var defaultConfig = {
   fromEmail: "noreply@example.com",
   subjectPrefix: "",
@@ -56,6 +64,38 @@ var defaultConfig = {
  *
  * @return {object} - Promise resolved with data.
  */
+
+exports.buildForwardMap = function(data) {
+  var docClient = new AWS.DynamoDB.DocumentClient();
+  var params = {
+    TableName: EMAIL_TABLE_NAME
+  };
+  var forwardMapping = {};
+
+  return new Promise(function(resolve, reject) {
+    docClient.scan(params, function(err, result) {
+      if (err) {
+        console.log("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+        return reject(new Error("Error: Unable to get data from db."));
+      }
+            //           console.log(JSON.stringify(dbdata));
+      if (result.Items) {
+        result.Items.forEach(function(item) {
+          forwardMapping[item[FIELD_ORIG_ADDRESS]] = item[FIELD_FORWARD_MAPPING][FIELD_FORWARD_MAPPING_VALS];
+                    //                   console.log(JSON.stringify(item, null, 2));
+        });
+        data.config.forwardMapping = forwardMapping;
+      } else {
+        console.log("Items not found in table");
+        return reject(new Error("Items not found in table"));
+      }
+
+ //           console.log(data);
+      return resolve(data);
+    });
+  });
+};
+
 exports.parseEvent = function(data) {
   // Validate characteristics of a SES event record.
   if (!data.event ||
@@ -291,6 +331,7 @@ exports.handler = function(event, context, callback, overrides) {
   var steps = overrides && overrides.steps ? overrides.steps :
   [
     exports.parseEvent,
+    exports.buildForwardMap,
     exports.transformRecipients,
     exports.fetchMessage,
     exports.processMessage,
@@ -327,3 +368,4 @@ Promise.series = function(promises, initValue) {
     return chain.then(promise);
   }, Promise.resolve(initValue));
 };
+
