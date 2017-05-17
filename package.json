@@ -23,17 +23,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/arithmetric/aws-lambda-ses-forwarder.git"
+    "url": "git+https://github.com/larkinrobert/aws-lambda-ses-forwarder.git#dynamo"
   },
   "keywords": [
     "aws",
     "email",
     "lambda"
   ],
-  "author": "Joe Turgeon <arithmetric@gmail.com>",
+  "author": "Robert Larkin <larkin.robertl@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/arithmetric/aws-lambda-ses-forwarder/issues"
+    "url": "https://github.com/larkinrobert/aws-lambda-ses-forwarder/issues"
   },
-  "homepage": "https://github.com/arithmetric/aws-lambda-ses-forwarder#readme"
+  "homepage": "https://github.com/larkinrobert/aws-lambda-ses-forwarder#readme"
 }
